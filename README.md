@@ -1,3 +1,14 @@
+Что изменили/как использовать?
+==========================================
+Изменили только проект engine.
+
+Нужно собрать engine (последний ключ - значит без тестов)
+```
+cd engine
+mvn clean install -Dmaven.test.skip=true
+``` 
+Копировать полученный engine\target\camunda-engine-7.7.0.jar в camunda-tomcat\server\apache-tomcat-8.0.24\lib.
+
 camunda BPM - The open source BPM platform
 ==========================================
 
