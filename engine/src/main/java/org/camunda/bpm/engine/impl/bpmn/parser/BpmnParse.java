@@ -542,10 +542,10 @@ public class BpmnParse extends Parse {
 
     LOG.parsingElement("process", processDefinition.getKey());
 
-    parseScope(processElement, processDefinition);
-
     // Parse any laneSets defined for this process
     parseLaneSets(processElement, processDefinition);
+
+    parseScope(processElement, processDefinition);
 
     for (BpmnParseListener parseListener : parseListeners) {
       parseListener.parseProcess(processElement, processDefinition);
@@ -2592,12 +2592,30 @@ public class BpmnParse extends Parse {
     parseHumanPerformer(taskElement, taskDefinition);
     parsePotentialOwner(taskElement, taskDefinition);
 
+	setTaskLaneInCandidateGroup(processDefinition, taskDefinition);
+        
     // Activiti custom extension
     parseUserTaskCustomExtensions(taskElement, taskDefinition);
 
     return taskDefinition;
   }
 
+  private void setTaskLaneInCandidateGroup(ProcessDefinitionEntity processDefinition, TaskDefinition taskDefinition) {
+		List<LaneSet> laneSets = processDefinition.getLaneSets();
+		for (LaneSet laneSet : laneSets) {
+			Collection<Lane> lanes = laneSet.getLanes();
+			for (Lane lane : lanes) {
+				List<String> flowNodeIds = lane.getFlowNodeIds();
+				for (String flowNodeId : flowNodeIds) {
+					if (taskDefinition.getKey().equals(flowNodeId)) {
+						taskDefinition.addCandidateGroupIdExpression(expressionManager.createExpression(lane.getId()));
+						return;
+					}
+				}
+			}
+		}
+	}
+  
   protected void parseHumanPerformer(Element taskElement, TaskDefinition taskDefinition) {
     List<Element> humanPerformerElements = taskElement.elements(HUMAN_PERFORMER);
 
@@ -2676,13 +2694,13 @@ public class BpmnParse extends Parse {
     }
 
     // Candidate groups
-    String candidateGroupsString = taskElement.attributeNS(CAMUNDA_BPMN_EXTENSIONS_NS, CANDIDATE_GROUPS_EXTENSION);
-    if (candidateGroupsString != null) {
-      List<String> candidateGroups = parseCommaSeparatedList(candidateGroupsString);
-      for (String candidateGroup : candidateGroups) {
-        taskDefinition.addCandidateGroupIdExpression(expressionManager.createExpression(candidateGroup.trim()));
-      }
-    }
+//    String candidateGroupsString = taskElement.attributeNS(CAMUNDA_BPMN_EXTENSIONS_NS, CANDIDATE_GROUPS_EXTENSION);
+//    if (candidateGroupsString != null) {
+//      List<String> candidateGroups = parseCommaSeparatedList(candidateGroupsString);
+//      for (String candidateGroup : candidateGroups) {
+//        taskDefinition.addCandidateGroupIdExpression(expressionManager.createExpression(candidateGroup.trim()));
+//      }
+//    }
 
     // Task listeners
     parseTaskListeners(taskElement, taskDefinition);
